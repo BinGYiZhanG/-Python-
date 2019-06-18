@@ -1,0 +1,32 @@
+
+8.1 变量不是盒子
+示例8-1　变量a 和b 引用同一个列表，而不是那个列表的副本
+  >>> a = [1, 2, 3]
+  >>> b = a
+  >>> a.append(4)
+  >>> b
+  [1, 2, 3, 4]
+  
+示例8-2　创建对象之后才会把变量分配给对象
+  >>> class Gizmo:
+  ... def __init__(self):
+  ... print('Gizmo id: %d' % id(self))
+  ...
+  >>> x = Gizmo()
+  Gizmo id: 4301489152 ➊
+  >>> y = Gizmo() * 10 ➋
+  Gizmo id: 4301489432 ➌
+  Traceback (most recent call last):
+  File "<stdin>", line 1, in <module>
+  TypeError: unsupported operand type(s) for *: 'Gizmo' and 'int'
+  >>>
+  >>> dir() ➍
+  ['Gizmo', '__builtins__', '__doc__', '__loader__', '__name__',
+  '__package__', '__spec__', 'x']
+➊ 输出的Gizmo id: ... 是创建Gizmo 实例的副作用。
+➋ 在乘法运算中使用Gizmo 实例会抛出异常。
+➌ 这里表明，在尝试求积之前其实会创建一个新的Gizmo 实例。
+➍ 但是，肯定不会创建变量y，因为在对赋值语句的右边进行求值时抛出了异常。
+
+8.2 标识，相等性和别名
+
