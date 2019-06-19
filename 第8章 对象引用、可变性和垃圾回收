@@ -30,3 +30,255 @@
 
 8.2 标识，相等性和别名
 
+示例8-3　charles 和lewis 指代同一个对象
+  >>> charles = {'name': 'Charles L. Dodgson', 'born': 1832}
+  >>> lewis = charles ➊
+  >>> lewis is charles
+  True
+  >>> id(charles), id(lewis) ➋
+  (4300473992, 4300473992)
+  >>> lewis['balance'] = 950 ➌
+  >>> charles
+  {'name': 'Charles L. Dodgson', 'balance': 950, 'born': 1832}
+  
+➊ lewis 是charles 的别名。
+➋ is 运算符和id 函数确认了这一点。
+➌ 向lewis 中添加一个元素相当于向charles 中添加一个元素。
+
+
+示例8-4　alex 与charles 比较的结果是相等，但alex 不是charles
+  >>> alex = {'name': 'Charles L. Dodgson', 'born': 1832, 'balance': 950} ➊
+  >>> alex == charles ➋
+  True
+  >>> alex is not charles ➌
+  True
+  
+is运算符==速度快，因为它不能重载
+
+示例8-5　一开始，t1 和t2 相等，但是修改t1 中的一个可变元素后，二者不相等了
+  >>> t1 = (1, 2, [30, 40]) ➊
+  >>> t2 = (1, 2, [30, 40]) ➋
+  >>> t1 == t2 ➌
+  True
+  >>> id(t1[-1]) ➍
+  4302515784
+  >>> t1[-1].append(99) ➎
+  >>> t1
+  (1, 2, [30, 40, 99])
+  >>> id(t1[-1]) ➏
+  4302515784
+  >>> t1 == t2 ➐
+  False
+➊ t1 不可变，但是t1[-1] 可变。
+➋ 构建元组t2，它的元素与t1 一样。
+➌ 虽然t1 和t2 是不同的对象，但是二者相等——与预期相符。
+➍ 查看t1[-1] 列表的标识。
+➎ 就地修改t1[-1] 列表。
+➏ t1[-1] 的标识没变，只是值变了。
+➐ 现在，t1 和t2 不相等。
+
+
+8.3　默认做浅复制
+
+复制列表（或多数内置的可变集合）最简单的方式是使用内置的类型构造方法。例如：
+  >>> l1 = [3, [55, 44], (7, 8, 9)]
+  >>> l2 = list(l1) ➊
+  >>> l2
+  [3, [55, 44], (7, 8, 9)]
+  >>> l2 == l1 ➋
+  True
+  >>> l2 is l1 ➌
+  False
+➊ list(l1) 创建l1 的副本。
+➋ 副本与源列表相等。
+➌ 但是二者指代不同的对象。
+对列表和其他可变序列来说，还能使用简洁的l2 = l1[:] 语句创建副本。
+然而，构造方法或[:] 做的是浅复制（即复制了最外层容器，副本中的元素是源容器中元
+素的引用）。如果所有元素都是不可变的，那么这样没有问题，还能节省内存。但是，如
+果有可变的元素，可能就会导致意想不到的问题。
+
+示例8-6　 为一个包含另一个列表的列表做浅复制；把这段代码复制粘贴到Python Tutor
+网站中，看看动画效果
+  l1 = [3, [66, 55, 44], (7, 8, 9)]
+  l2 = list(l1) # ➊
+  l1.append(100) # ➋
+  l1[1].remove(55) # ➌
+  print('l1:', l1)
+  print('l2:', l2)
+  l2[1] += [33, 22] # ➍
+  l2[2] += (10, 11) # ➎
+  print('l1:', l1)
+  print('l2:', l2)
+➊ l2 是l1 的浅复制副本。此时的状态如图8-3 所示。
+➋ 把100 追加到l1 中，对l2 没有影响。
+➌ 把内部列表l1[1] 中的55 删除。这对l2 有影响，因为l2[1] 绑定的列表与l1[1] 是同
+一个。
+➍ 对可变的对象来说，如l2[1] 引用的列表，+= 运算符就地修改列表。这次修改在l1[1]
+中也有体现，因为它是l2[1] 的别名。
+➎ 对元组来说，+= 运算符创建一个新元组，然后重新绑定给变量l2[2]。这等同于l2[2] =
+l2[2] + (10, 11)。现在，l1 和l2 中最后位置上的元组不是同一个对象。如图8-4 所示。
+示例8-6 的输出在示例8-7 中，对象的最终状态如图8-4 所示。
+示例8-7　示例8-6 的输出
+  l1: [3, [66, 44], (7, 8, 9), 100]
+  l2: [3, [66, 44], (7, 8, 9)]
+  l1: [3, [66, 44, 33, 22], (7, 8, 9), 100]
+  l2: [3, [66, 44, 33, 22], (7, 8, 9, 10, 11)]
+
+为任意对象做深复制和浅复制
+浅复制没什么问题，但有时我们需要的是深复制（即副本不共享内部对象的引用）。copy
+模块提供的deepcopy 和copy 函数能为任意对象做深复制和浅复制。
+  
+示例8-8　校车乘客在途中上车和下车
+  class Bus:
+    def __init__(self, passengers=None):
+      if passengers is None:
+        self.passengers = []
+      else:
+        self.passengers = list(passengers)
+        
+    def pick(self, name):
+      self.passengers.append(name)
+      
+    def drop(self, name):
+      self.passengers.remove(name)
+示例8-9　使用copy 和deepcopy 产生的影响
+  >>> import copy
+  >>> bus1 = Bus(['Alice', 'Bill', 'Claire', 'David'])
+  >>> bus2 = copy.copy(bus1)
+  >>> bus3 = copy.deepcopy(bus1)
+  >>> id(bus1), id(bus2), id(bus3)
+  (4301498296, 4301499416, 4301499752) ➊
+  >>> bus1.drop('Bill')
+  >>> bus2.passengers
+  ['Alice', 'Claire', 'David'] ➋
+  >>> id(bus1.passengers), id(bus2.passengers), id(bus3.passengers)
+  (4302658568, 4302658568, 4302657800) ➌
+  >>> bus3.passengers
+  ['Alice', 'Bill', 'Claire', 'David'] ➍
+➊ 使用copy 和deepcopy，创建3 个不同的Bus 实例。
+➋ bus1 中的'Bill' 下车后，bus2 中也没有他了。
+➌ 审查passengers 属性后发现，bus1 和bus2 共享同一个列表对象，因为bus2 是bus1 的
+浅复制副本。
+➍ bus3 是bus1 的深复制副本，因此它的passengers 属性指代另一个列表。
+
+示例8-10　循环引用：b 引用a，然后追加到a 中；deepcopy 会想办法复制a
+  >>> a = [10, 20]
+  >>> b = [a, 30]
+  >>> a.append(b)
+  >>> a
+  [10, 20, [[...], 30]]
+  >>> from copy import deepcopy
+  >>> c = deepcopy(a)
+  >>> c
+  [10, 20, [[...], 30]]
+  
+8.4　函数的参数作为引用时
+
+示例8-11　函数可能会修改接收到的任何可变对象
+  >>> def f(a, b):
+  ... a += b
+  ... return a
+  ...
+  >>> x = 1
+  >>> y = 2
+  >>> f(x, y)
+  3
+  >>> x, y ➊
+  (1, 2)
+  >>> a = [1, 2]
+  >>> b = [3, 4]
+  >>> f(a, b)
+  [1, 2, 3, 4]
+  >>> a, b ➋
+  ([1, 2, 3, 4], [3, 4])
+  >>> t = (10, 20)
+  >>> u = (30, 40)
+  >>> f(t, u)
+  (10, 20, 30, 40)
+  >>> t, u ➌
+  ((10, 20), (30, 40))
+➊ 数字x 没变。
+➋ 列表a 变了。
+➌ 元组t 没变。
+
+示例8-12　一个简单的类，说明可变默认值的危险
+class HauntedBus:
+"""备受幽灵乘客折磨的校车"""
+  def __init__(self, passengers=[]): ➊
+    self.passengers = passengers ➋
+  def pick(self, name):
+    self.passengers.append(name) ➌
+  def drop(self, name):
+    self.passengers.remove(name)
+➊ 如果没传入passengers 参数，使用默认绑定的列表对象，一开始是空列表。
+➋ 这个赋值语句把self.passengers 变成passengers 的别名，而没有传入passengers 参
+数时，后者又是默认列表的别名。
+➌ 在self.passengers 上调用.remove() 和.append() 方法时，修改的其实是默认列表，
+它是函数对象的一个属性。
+
+示例8-13　备受幽灵乘客折磨的校车
+  >>> bus1 = HauntedBus(['Alice', 'Bill'])
+  >>> bus1.passengers
+  ['Alice', 'Bill']
+  >>> bus1.pick('Charlie')
+  >>> bus1.drop('Alice')
+  >>> bus1.passengers ➊
+  ['Bill', 'Charlie']
+  >>> bus2 = HauntedBus() ➋
+  >>> bus2.pick('Carrie')
+  >>> bus2.passengers
+  ['Carrie']
+  >>> bus3 = HauntedBus() ➌
+  >>> bus3.passengers ➍
+  ['Carrie']
+  >>> bus3.pick('Dave')
+  >>> bus2.passengers ➎
+  ['Carrie', 'Dave']
+  >>> bus2.passengers is bus3.passengers ➏
+  True
+  >>> bus1.passengers ➐
+  ['Bill', 'Charlie']
+➊ 目前没什么问题，bus1 没有出现异常。
+➋ 一开始，bus2 是空的，因此把默认的空列表赋值给self.passengers。
+➌ bus3 一开始也是空的，因此还是赋值默认的列表。
+➍ 但是默认列表不为空！
+➎ 登上bus3 的Dave 出现在bus2 中。
+➏ 问题是，bus2.passengers 和bus3.passengers 指代同一个列表。
+➐ 但bus1.passengers 是不同的列表。
+
+出现这个问题的根源是，默认值在定义函数时计算（通常在加载模块时），因此默认值变成了函数对象的属性。
+因此，如果默认值是可变对象，而且修改了它的值，那么后续的函数调用都会受到影响。
+
+示例8-14　从TwilightBus 下车后，乘客消失了
+  >>> basketball_team = ['Sue', 'Tina', 'Maya', 'Diana', 'Pat'] ➊
+  >>> bus = TwilightBus(basketball_team) ➋
+  >>> bus.drop('Tina') ➌
+  >>> bus.drop('Pat')
+  >>> basketball_team ➍
+  ['Sue', 'Maya', 'Diana']
+➊ basketball_team 中有5 个学生的名字。
+➋ 使用这队学生实例化TwilightBus。
+➌ 一个学生从bus 下车了，接着又有一个学生下车了。
+➍ 下车的学生从篮球队中消失了！
+
+示例8-15　一个简单的类，说明接受可变参数的风险
+class TwilightBus:
+  """让乘客销声匿迹的校车"""
+  def __init__(self, passengers=None):
+    if passengers is None:
+      self.passengers = [] ➊
+    else:
+      self.passengers = passengers ➋
+  def pick(self, name):
+    self.passengers.append(name)
+  def drop(self, name):
+    self.passengers.remove(name) ➌
+➊ 这里谨慎处理，当passengers 为None 时，创建一个新的空列表。
+➋ 然而，这个赋值语句把self.passengers 变成passengers 的别名，而后者是传给__
+init__ 方法的实参（即示例8-14 中的basketball_team）的别名。
+➌ 在self.passengers 上调用.remove() 和.append() 方法其实会修改传给构造方法的那
+个列表。
+
+8.5　del和垃圾回收
+  对象绝不会自行销毁；然而，无法得到对象时，可能会被当作垃圾回收。
+
