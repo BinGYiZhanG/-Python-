@@ -281,4 +281,130 @@ init__ 方法的实参（即示例8-14 中的basketball_team）的别名。
 
 8.5　del和垃圾回收
   对象绝不会自行销毁；然而，无法得到对象时，可能会被当作垃圾回收。
+示例8-16　没有指向对象的引用时，监视对象生命结束时的情形
+  >>> import weakref
+  >>> s1 = {1, 2, 3}
+  >>> s2 = s1 ➊
+  >>> def bye(): ➋
+  ... print('Gone with the wind...')
+  ...
+  >>> ender = weakref.finalize(s1, bye) ➌
+  >>> ender.alive ➍
+  True
+  >>> del s1
+  >>> ender.alive ➎
+  True
+  注2：如果两个对象相互引用，像示例8-10 那样，当它们的引用只存在二者之间时，垃圾回收程序会判定
+  它们都无法获取，进而把它们都销毁。
+  196 ｜ 第8 章
+  >>> s2 = 'spam' ➏
+  Gone with the wind...
+  >>> ender.alive
+  False
+➊ s1 和s2 是别名，指向同一个集合，{1, 2, 3}。
+➋ 这个函数一定不能是要销毁的对象的绑定方法，否则会有一个指向对象的引用。
+➌ 在s1 引用的对象上注册bye 回调。
+➍ 调用finalize 对象之前，.alive 属性的值为True。
+➎ 如前所述，del 不删除对象，而是删除对象的引用。
+➏ 重新绑定最后一个引用s2，让{1, 2, 3} 无法获取。对象被销毁了，调用了bye 回调，
+ender.alive 的值变成了False。
 
+8.6　弱引用
+正是因为有引用，对象才会在内存中存在。当对象的引用数量归零后，垃圾回收程序会把
+对象销毁。
+示例8-17　 弱引用是可调用的对象，返回的是被引用的对象；如果所指对象不存在了，
+返回None
+  >>> import weakref
+  >>> a_set = {0, 1}
+  >>> wref = weakref.ref(a_set) ➊
+  >>> wref
+  <weakref at 0x100637598; to 'set' at 0x100636748>
+  >>> wref() ➋
+  {0, 1}
+  >>> a_set = {2, 3, 4} ➌
+  >>> wref() ➍
+  {0, 1}
+  >>> wref() is None ➎
+  False
+  >>> wref() is None ➏
+  True
+➊ 创建弱引用对象wref，下一行审查它。
+➋ 调用wref() 返回的是被引用的对象，{0, 1}。因为这是控制台会话，所以{0, 1} 会绑
+定给_ 变量。
+➌ a_set 不再指代{0, 1} 集合，因此集合的引用数量减少了。但是_ 变量仍然指代它。
+➍ 调用wref() 依旧返回{0, 1}。
+➎ 计算这个表达式时，{0, 1} 存在，因此wref() 不是None。但是，随后_ 绑定到结果值
+False。现在{0, 1} 没有强引用了。
+➏ 因为{0, 1} 对象不存在了，所以wref() 返回None。
+
+weakref 模块的文档（http://docs.python.org/3/library/weakref.html）指出，weakref.ref 类其
+实是低层接口，供高级用途使用，多数程序最好使用weakref 集合和finalize。也就是说，
+应该使用WeakKeyDictionary、WeakValueDictionary、WeakSet 和finalize（在内部使用弱
+引用），不要自己动手创建并处理weakref.ref 实例。我们在示例8-17 中那么做是希望借
+助实际使用weakref.ref 来褪去它的神秘色彩。但是实际上，多数时候Python 程序都使用
+weakref 集合。
+
+示例8-18　Cheese 有个kind 属性和标准的字符串表示形式
+  class Cheese:
+    def __init__(self, kind):
+      self.kind = kind
+    def __repr__(self):
+      return 'Cheese(%r)' % self.kind
+在示例8-19 中，我们把catalog 中的各种奶酪载入WeakValueDictionary 实现的stock
+中。然而，删除catalog 后，stock 中只剩下一种奶酪了。你知道为什么帕尔马干酪
+（Parmesan）比其他奶酪保存的时间长吗？ 4 代码后面的提示中有答案。
+示例8-19　顾客：“你们店里到底有没有奶酪？”
+  >>> import weakref
+  >>> stock = weakref.WeakValueDictionary() ➊
+  >>> catalog = [Cheese('Red Leicester'), Cheese('Tilsit'),
+  ... Cheese('Brie'), Cheese('Parmesan')]
+  ...
+  >>> for cheese in catalog:
+  ... stock[cheese.kind] = cheese ➋
+  ...
+  >>> sorted(stock.keys())
+  ['Brie', 'Parmesan', 'Red Leicester', 'Tilsit'] ➌
+  >>> del catalog
+  >>> sorted(stock.keys())
+  ['Parmesan'] ➍
+  >>> del cheese
+  >>> sorted(stock.keys())
+  []
+➊ stock 是WeakValueDictionary 实例。
+➋ stock 把奶酪的名称映射到catalog 中Cheese 实例的弱引用上。
+➌ stock 是完整的。
+➍ 删除catalog 之后，stock 中的大多数奶酪都不见了，这是WeakValueDictionary 的预期
+行为。为什么不是全部呢？
+临时变量引用了对象，这可能会导致该变量的存在时间比预期长。通常，这对
+局部变量来说不是问题，因为它们在函数返回时会被销毁。但是在示例8-19
+中，for 循环中的变量cheese 是全局变量，除非显式删除，否则不会消失。
+
+8.7　Python对不可变类型施加的把戏
+
+示例8-20　使用另一个元组构建元组，得到的其实是同一个元组
+  >>> t1 = (1, 2, 3)
+  >>> t2 = tuple(t1)
+  >>> t2 is t1 ➊
+  注5：文档明确指出了这个行为。在Python 控制台中输入help(tuple)，你会看到这句话：“如果参数是一
+  个元组，那么返回值是同一个对象。”撰写这本书之前，我还以为自己对元组无所不知。
+  200 ｜ 第8 章
+  True
+  >>> t3 = t1[:]
+  >>> t3 is t1 ➋
+  True
+➊ t1 和t2 绑定到同一个对象。
+➋ t3 也是。
+
+示例8-21　字符串字面量可能会创建共享的对象
+  >>> t1 = (1, 2, 3)
+  >>> t3 = (1, 2, 3) # ➊
+  >>> t3 is t1 # ➋
+  False
+  >>> s1 = 'ABC'
+  >>> s2 = 'ABC' # ➌
+  >>> s2 is s1 # ➍
+  True
+➊ 新建一个元组。
+➋ t1 和t3 相等，但不是同一个对象。
+➌ 再新建一个字符串。
+➍ 奇怪的事发生了，a 和b 指代同一个字符串。
