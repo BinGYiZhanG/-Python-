@@ -201,15 +201,102 @@ Out[34]:
 
 ![](https://github.com/BinGYiZhanG/Python_/blob/master/%E3%80%8A%E5%88%A9%E7%94%A8Python%E8%BF%9B%E8%A1%8C%E6%95%B0%E6%8D%AE%E5%88%86%E6%9E%90%E3%80%8B/Images/07101427.png)
 
+## 11,关于设置行和列的```name```值
+```py
+In [35]: frame3.index.name='year';frame3.columns.name='state'
 
+In [36]: frame3
+Out[36]:
+state  Nevada  Ohio
+year
+2000      NaN   1.5
+2001      2.4   1.7
+2002      2.9   NaN
+2002      NaN   3.6
+```
+### 跟Series一样，values数字那个也会以二维ndarray的形式返回DataFrame中的数据
+```py
+In [37]: frame3.values
+Out[37]:
+array([[nan, 1.5],
+       [2.4, 1.7],
+       [2.9, nan],
+       [nan, 3.6]])
+```
+### 所有列存在数据类型兼容的现象
+```py
+In [38]: frame2.values
+Out[38]:
+array([['Ohio', 2000, nan, 1.5],
+       ['Ohio', 2001, -1.2, 1.7],
+       ['Ohio', 2002, nan, 3.6],
+       ['Nevada', 2001, -1.5, 2.4],
+       ['Nevada', 2002, -1.7, 2.9]], dtype=object)
+```
+## 12,索引对象
+```py
+In [40]: obj=Series(range(3),index=['a','b','c'])
 
+In [41]: index=obj.index
 
+In [42]: index
+Out[42]: Index(['a', 'b', 'c'], dtype='object')
 
+In [43]: index[1:]
+Out[43]: Index(['b', 'c'], dtype='object')
 
+In [44]: index[1]='d'
+---------------------------------------------------------------------------
+TypeError                                 Traceback (most recent call last)
+<ipython-input-44-8be6e68dba2d> in <module>()
+----> 1 index[1]='d'
 
+D:\Python\Anaconda3 5.1.0\lib\site-packages\pandas\core\indexes\base.py in __setitem__(self, key, value)
+   1722
+   1723     def __setitem__(self, key, value):
+-> 1724         raise TypeError("Index does not support mutable operations")
+   1725
+   1726     def __getitem__(self, key):
 
+TypeError: Index does not support mutable operations
+```
+### 索引对象不可改变
+### 不可修改性非常重要，因为重要才能使Index对象在多个数据结构中安全共享
 
+```py
+In [46]: index=pd.Index(np.arange(3))
 
+In [47]: obj2=Series([1.5,-2.5,0],index=index)
+
+In [49]: obj2.index is index
+Out[49]: True
+
+```
+### Index对象是pandas数据模型的重要组成部分
+![](https://github.com/BinGYiZhanG/Python_/blob/master/%E3%80%8A%E5%88%A9%E7%94%A8Python%E8%BF%9B%E8%A1%8C%E6%95%B0%E6%8D%AE%E5%88%86%E6%9E%90%E3%80%8B/Images/07101441.png)
+
+### Index功能也类似一个固定大小的集合
+```py
+In [50]: frame3
+Out[50]:
+state  Nevada  Ohio
+year
+2000      NaN   1.5
+2001      2.4   1.7
+2002      2.9   NaN
+2002      NaN   3.6
+
+NameError: name 'frames' is not defined
+
+In [52]: 'Ohio' in frame3.columns
+Out[52]: True
+
+In [53]: 2003 in frame3.index
+Out[53]: False
+```
+### Index的属性和方法
+
+![](https://github.com/BinGYiZhanG/Python_/blob/master/%E3%80%8A%E5%88%A9%E7%94%A8Python%E8%BF%9B%E8%A1%8C%E6%95%B0%E6%8D%AE%E5%88%86%E6%9E%90%E3%80%8B/Images/07101444.png)
 
 
 
