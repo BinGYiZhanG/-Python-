@@ -197,13 +197,61 @@ page.render("./total.html")
 
 #### 1，获取文件具体信息
 ```
+data.shape
+```
+![](https://github.com/BinGYiZhanG/Python_/blob/master/%E6%95%B0%E6%8D%AE%E5%88%86%E6%9E%90%E5%AE%9E%E6%88%98/Images/py11280328.jpg)
+```
+data.head
+```
+![](https://github.com/BinGYiZhanG/Python_/blob/master/%E6%95%B0%E6%8D%AE%E5%88%86%E6%9E%90%E5%AE%9E%E6%88%98/Images/py1911280330.jpg)
 
+##### 读取行列数及索引
+![](https://github.com/BinGYiZhanG/Python_/blob/master/%E6%95%B0%E6%8D%AE%E5%88%86%E6%9E%90%E5%AE%9E%E6%88%98/Images/1911280333.jpg)
+##### 读取指定数据
+* （1），读取指定单行和多行数据
+![](https://github.com/BinGYiZhanG/Python_/blob/master/%E6%95%B0%E6%8D%AE%E5%88%86%E6%9E%90%E5%AE%9E%E6%88%98/Images/1911280334.jpg)
+* （2），读取指定单列和多列数据
+![](https://github.com/BinGYiZhanG/Python_/blob/master/%E6%95%B0%E6%8D%AE%E5%88%86%E6%9E%90%E5%AE%9E%E6%88%98/Images/py911280335.jpg)
+* （3），读入单元格数据或部分数据
+![](https://github.com/BinGYiZhanG/Python_/blob/master/%E6%95%B0%E6%8D%AE%E5%88%86%E6%9E%90%E5%AE%9E%E6%88%98/Images/py911280336.jpg)
+
+
+#### 2，输出数据到xlsx文件（举一个列出869成绩高于140分的学生信息）
 ```
 
+import pandas as pd
+
+data = pd.DataFrame(pd.read_excel('软微2019成绩.xlsx'))
+
+tmp = []
+for i in range(1,len(data.index.values)):
+    if data.iloc[i,8] == '缺考':
+        continue
+    elif data.iloc[i,8] == '违纪':# 存在违纪同学
+        continue
+    if int(data.iloc[i,8]) >= 140:
+        tmp.append(data.iloc[i].values)
+
+writer = pd.ExcelWriter('869成绩高于140分的学生信息.xlsx')
+data2 = pd.DataFrame(data=tmp,columns=data.columns.values)
+data2.to_excel(writer,'Sheet_one',index=False)
+writer.save()
 
 
+```
+![](https://github.com/BinGYiZhanG/Python_/blob/master/%E6%95%B0%E6%8D%AE%E5%88%86%E6%9E%90%E5%AE%9E%E6%88%98/Images/py911280337.jpg)
+* 863仅有两人140分，第二个也太夸张了，数学85，英语45，专业课强，但是没用，连国家线都不达
+* [Pyecharts官方文档：](https://pyecharts.org/#/zh-cn/intro)
 
 
+#### 3，用Python处理pdf文件中的数据：
+* （1），导入库
+![](https://github.com/BinGYiZhanG/Python_/blob/master/%E6%95%B0%E6%8D%AE%E5%88%86%E6%9E%90%E5%AE%9E%E6%88%98/Images/py911280341.jpg)
+```
+生成的df的类型是：
+Out[4]: pandas.core.frame.DataFrame
+
+```
 
 
 
