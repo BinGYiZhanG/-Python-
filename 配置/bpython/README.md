@@ -4,3 +4,21 @@
 * 2，执行，```pip install D:\Python\temp_pakage\curses-2.2.1+utf8-cp36-cp36m-win32.whl```
 * 3，执行```>bpython-curses```
 * 可能得执行```pip install bpython```
+### 关于pip_install安装
+```
+用阿里镜像装
+pip install PyPDF2 -i https://mirrors.aliyun.com/pypi/simple/
+
+用清华镜像安装:
+pip install -i https://pypi.tuna.tsinghua.edu.cn/simple pyecharts
+
+
+pip安装网站：
+https://pypi.org/
+
+关于安装pymongo：
+pip install pymongo -i http://pypi.douban.com/simple/ --trusted-host pypi.douban.com
+
+多按几次才可以的
+
+```
